@@ -2,12 +2,12 @@
 -- Author: OxiGen#1337
 -- Version: Nightfall
 
-local BSVersion = "[Nightfall] [2.3]"
+local BSVersion = "[Nightfall] [2.4]"
 local loadingStart = os.clock()
 
-system.log("INIT", "             ******         **            **          **     **    **       ")
-system.log("INIT", "            **   **     **     **     **     **      **       **  **        ")
-system.log("INIT", "           **    **    **      **    **      **     **         ****         ")
+system.log("INIT", "             ******         **            **          **     **    **        ")
+system.log("INIT", "            **   **     **     **     **     **      **       **  **         ")
+system.log("INIT", "           **    **    **      **    **      **     **         ****          ")
 system.log("INIT", "          ******      **       **   **       **    **           **           ")
 system.log("INIT", "         **    **     **      **    **      **    **           **            ")
 system.log("INIT", "        **    **      **    **      **    **     ********     **             ")
