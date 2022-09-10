@@ -93,4 +93,9 @@ function features.getPlayerPed(pid)
 	return PLAYER.GET_PLAYER_PED_SCRIPT_INDEX(pid)
 end
 
+function features.vehicleCheck()
+	local vehicle = features.getLocalVehicle(false)
+	return (features.doesEntityExist(vehicle) and PED.IS_PED_IN_ANY_VEHICLE(PLAYER.PLAYER_PED_ID(), false))
+end
+
 return features
