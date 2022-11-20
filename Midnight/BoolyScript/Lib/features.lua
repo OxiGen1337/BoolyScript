@@ -98,4 +98,18 @@ function features.vehicleCheck()
 	return (features.doesEntityExist(vehicle) and PED.IS_PED_IN_ANY_VEHICLE(PLAYER.PLAYER_PED_ID(), false))
 end
 
+function features.boolToInt(value)
+	if value then
+		return 1
+	end
+	return 0
+end
+
+function features.boolToFloat(value)
+	if value then
+		return 1.0
+	end
+	return 0.0
+end
+
 return features

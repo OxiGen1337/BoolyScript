@@ -11,6 +11,11 @@ scripts.globals['getPlayerOtr'] = function(pid)
     return script_global:new(2689235):at(pid, 453):at(208):get_long()
 end
 
+scripts.globals['skipCutscene'] = function()
+    script_global:new(2789756):at(3):set_int64(1)
+    script_global:new(1575058):set_int64(1)
+end
+
 scripts.events = {}
 
 scripts.events['kick'] = function(pid)

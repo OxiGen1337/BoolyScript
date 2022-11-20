@@ -31,15 +31,22 @@ local features = require '\\BoolyScript\\Lib\\features'
 local callbacks = require '\\BoolyScript\\Lib\\callbacks'
 local json = require '\\BoolyScript\\Lib\\JSON'
 local scripts = require '\\BoolyScript\\Lib\\scripts'
+local spawner = require '\\BoolyScript\\Lib\\spawner'
 
 local timers = {}
+
 local options = {}
 options.bool = {}
 options.click = {}
 options.sliderInt = {}
 options.sliderFloat = {}
 options.combo = {}
+options.comboEx = {}
 options.configIgnore = {}
+options.inputText = {}
+options.dynText = {}
+options.staticText = {}
+
 local stuff = {}
 local subs = {}
 local parsedFiles = {}
@@ -78,11 +85,11 @@ paths.configs.savedObjects = paths.folders.userData .. '\\' .. 'savedObjects.jso
 
 console.log(10, "[INIT] Parsing json data...\n")
 
--- do
---     local file = io.open(paths.dumps.peds, 'r')
---     parsedFiles.peds = json:decode(file:read('*all'))
---     file:close()
--- end
+do
+    local file = io.open(paths.dumps.peds, 'r')
+    parsedFiles.peds = json:decode(file:read('*all'))
+    file:close()
+end
 
 parsedFiles.weaponsSimp = {}
 do
@@ -117,35 +124,133 @@ subs.main = {}
 subs.main.page = menu.add_page("BoolyScript " .. tostring(toRemove), 17)
 subs.main.localBlock = menu.add_mono_block(subs.main.page, "Local", 0)
 
+menu.add_static_text(subs.main.localBlock, "Animations")
+
+options.click['nadristat'] = menu.add_button(subs.main.localBlock, "Make a poop (Nadristat)", function()
+    local ped = PLAYER.PLAYER_PED_ID()
+    local shit = string.joaat("prop_big_shit_02")
+    local coords = features.getEntityCoords(ped)
+    coords.z = coords.z - 1
+    TASK.CLEAR_PED_TASKS_IMMEDIATELY(ped)
+    callbacks.requestAnimDict("missfbi3ig_0", function()
+        TASK.TASK_PLAY_ANIM(ped, "missfbi3ig_0", "shit_loop_trev", 8.0, 8.0, -1, 0, 0.0, false, false, false)
+        callbacks.requestModel(shit, function()
+            entity.spawn_obj(shit, coords)
+        end)
+    end)
+end)
+
+local animsTable = {
+    ["Sexual"] = {
+        ["Doggystyle 1"] = { "rcmpaparazzo_2", "shag_loop_poppy" },
+        ["Doggystyle 2"] = { "rcmpaparazzo_2", "shag_loop_a" },
+        ["Shaking Ass"] = { "switch@trevor@mocks_lapdance", "001443_01_trvs_28_idle_stripper" },
+        ["Slow Humping"] = { "misscarsteal2pimpsex", "shagloop_pimp" }
+    },
+    ["Animals"] = {
+        ["Monkey"] = { "missfbi5ig_30monkeys", "monkey_b_freakout_loop" }, 
+        ["Chop Hump"] = { "missfra0_chop_find", "hump_loop_chop" },
+        ["Chop Swim"] = { "creatures@rottweiler@swim@", "swim" }
+    },
+    ["Actions"] = {
+        ["Air Guitar"] = { "anim@mp_player_intcelebrationfemale@air_guitar", "air_guitar"},
+        ["Blow Kiss"] = { "anim@mp_player_intcelebrationfemale@blow_kiss", "blow_kiss"},
+        ["Bro Hug"] = { "anim@mp_player_intcelebrationpaired@f_m_bro_hug", "bro_hug_right"},
+        ["Challenge"] = { "misscommon@response", "face_palm"},
+        ["Face Palm"] = { "anim@mp_player_intcelebrationmale@face_palm", ""},
+        ["Finger"] = { "anim@mp_player_intcelebrationmale@finger", "finger"},
+        ["Hands Up"] = { "mp_pol_bust_out", "guard_handsup_loop"},
+        ["Hump Air"] = { "anim@mp_player_intcelebrationfemale@air_shagging", "air_shagging"},
+        ["Jazz Hands"] = { "anim@mp_player_intcelebrationmale@jazz_hands", "jazz_hands"},
+        ["Nose Pick"] = { "anim@mp_player_intcelebrationmale@nose_pick", "nose_pick"},
+        ["Photographer"] = { "anim@mp_player_intcelebrationmale@photography", "photography"},
+        ["Salute"] = { "anim@mp_player_intcelebrationmale@salute", "salute"},
+        ["Shush"] = { "anim@mp_player_intcelebrationmale@shush", "shush"},
+        ["Slow Clap"] = { "anim@mp_player_intcelebrationmale@slow_clap", "slow_clap"},
+        ["Smoke"] = { "anim@mp_player_intcelebrationmale@smoke_flick", "smoke_flick"},
+        ["Surrender"] = { "anim@mp_player_intcelebrationmale@surrender", "surrender"},
+        ["Synth"] = { "anim@mp_player_intcelebrationfemale@air_synth", "air_synth"},
+        ["Thumbs Up"] = { "anim@mp_player_intcelebrationmale@thumbs_up", "thumbs_up"},
+        ["Wank"] = { "mp_player_intwank", "mp_player_int_wank" }
+    },
+    ["Dance"] = {
+        ["Casual"] = { "rcmnigel1bnmt_1b", "dance_loop_tyler"},
+        ["Clown"] = { "rcm_barry2", "clown_idle_6"},
+        ["Pole"] = { "mini@strip_club@pole_dance@pole_dance3", "pd_dance_03"},
+        ["Private"] = { "mini@strip_club@private_dance@part2", "priv_dance_p2"},
+        ["Receive"] = { "mp_am_stripper", "lap_dance_player"},
+        ["Sexual"] = { "mini@strip_club@pole_dance@pole_a_2_stage", "pole_a_2_stage"},
+        ["Yacht"] = { "oddjobs@assassinate@multi@yachttarget@lapdance", "yacht_ld_f" }
+    },
+    ["Misc"] = {
+        ["Electrocute"] = { "ragdoll@human", "electrocute"},
+        ["Hover"] = { "swimming@base", "dive_idle"},
+        ["Jump"] = { "move_jump", "jump_launch_l_to_skydive"},
+        ["Meditate"] = { "rcmcollect_paperleadinout@", "meditiate_idle"},
+        ["Party"] = { "rcmfanatic1celebrate", "celebrate"},
+        ["Pissing"] = { "misscarsteal2peeing", "peeing_loop"},
+        ["Push Ups"] = { "rcmfanatic3", "ef_3_rcm_loop_maryann"},
+        ["Run"] = { "move_m@alien", "alien_run"},
+        ["Shitting"] = { "missfbi3ig_0", "shit_loop_trev"},
+        ["Showering"] = { "mp_safehouseshower@male@", "male_shower_idle_b"},
+        ["Swim"] = { "swimming@scuba", "dive_idle"},
+        ["Vomit"] = { "missfam5_blackout", "vomit"},
+        ["Wave Forward"] = { "friends@frj@ig_1", "wave_d"},
+        ["Wave Hands High"] = { "random@prisoner_lift", "arms_waving"},
+        ["Wave One Arm"] = { "random@shop_gunstore", "_greeting" }
+    }
+}
+
+local animsClasses = {"Sexual", "Animals", "Actions", "Dance", "Misc"}
+local selectedClassTable = {}
+local currentAnimInfo = {
+    ["name"] = "NULL",
+    ["dict"] = "NULL",
+    ["anim"] = "NULL"
+}
+
+options.combo['animsClass'] = menu.add_combo(subs.main.localBlock, "Class", animsClasses, function(data, pos)
+    selectedClassTable = {}
+    for key, value in pairs(animsTable[animsClasses[pos]]) do
+        table.insert(selectedClassTable, key)
+    end
+    options.combo['animsSelection']:set_table(selectedClassTable)
+end)
+
+options.combo['animsSelection'] = menu.add_combo(subs.main.localBlock, "Animation", {"None"}, function(data, pos)
+    local class = animsClasses[options.combo['animsClass']:get()+1]
+    local table = animsTable[class][selectedClassTable[pos]]
+    currentAnimInfo = {
+        ["name"] = class,
+        ["dict"] = table[1],
+        ["anim"] = table[2]
+    }    
+    print(currentAnimInfo.name)
+end)
+
+options.click['animsPlay'] = menu.add_button(subs.main.localBlock, "Play", function()
+    TASK.CLEAR_PED_TASKS_IMMEDIATELY(PLAYER.PLAYER_PED_ID())
+    callbacks.requestAnimDict(currentAnimInfo.dict, function()
+        TASK.TASK_PLAY_ANIM(PLAYER.PLAYER_PED_ID(), currentAnimInfo.dict, currentAnimInfo.anim, 8.0, 8.0, -1, 0, 0.0, false, false, false) 
+    end)
+end)
+
+options.click['animsStop'] = menu.add_button(subs.main.localBlock, "Stop", function()
+    TASK.CLEAR_PED_TASKS_IMMEDIATELY(PLAYER.PLAYER_PED_ID())
+end)
+
 menu.add_static_text(subs.main.localBlock, "Movement")
 
 options.bool['clumsiness'] = menu.add_checkbox(subs.main.localBlock, "Clumsiness")
 options.sliderFloat['runSpeedMult'] = menu.add_slider_float(subs.main.localBlock, "Runnig speed", 1.0, 1.49)
 options.sliderFloat['swimSpeedMult'] = menu.add_slider_float(subs.main.localBlock, "Swimming speed", 1.0, 1.49)
 
--- options.click['nadristat'] = menu.add_button(subs.main.localBlock, "Make a poop (Nadristat)", function()
---     thread.create(function()
---         local ped = PLAYER.PLAYER_PED_ID()
---         local shit = string.joaat("prop_big_shit_02")
---         local coords = features.getEntityCoords(ped)
---         coords.z = coords.z - 1
---         callbacks.requestAnimDict("missfbi3ig_0", function()
---             TASK.CLEAR_PED_TASKS_IMMEDIATELY(ped)
---             TASK.TASK_PLAY_ANIM(ped, "missfbi3ig_0", "shit_loop_trev", 8.0, 8.0, 3000, 0, 0.0, true, true, true)
---             -- wait(1000)
---             -- callbacks.requestModel(shit, function()
---             --     entity.spawn_obj(shit, coords)
---             -- end)
---         end)
---     end)
--- end)
 
 stuff.pedFlags = {
     ["Swimming mode"] = 65,
 	["Shrink mode"] = 223,
 	["Always have parachute"] = 362,
 }
-
 
 stuff.activePedFlags = {}
 
@@ -200,9 +305,11 @@ options.bool['allowPauseInOnline'] = menu.add_checkbox(subs.main.localBlock, "Al
 options.bool['allowPauseWhenDead'] = menu.add_checkbox(subs.main.localBlock, "Allow pause when dead")
 options.bool['silentBST'] = menu.add_checkbox(subs.main.localBlock, "Silent BST")
 
-menu.add_static_text(subs.main.localBlock, "World")
+options.click['skipCutscene'] = menu.add_button(subs.main.localBlock, "Skip cutscene", function()
+    scripts.globals.skipCutscene()
+end)
 
-stuff.pedsPtr = nil
+menu.add_static_text(subs.main.localBlock, "World")
 
 -- options.bool['cleanupPeds'] = menu.add_checkbox(subs.main.localBlock, "Peds cleanup")
 -- options.bool['cleanupVehs'] = menu.add_checkbox(subs.main.localBlock, "Vehicles cleanup")
@@ -230,19 +337,111 @@ options.click['artStrike'] = menu.add_button(subs.main.localBlock, "Artillery st
     end)
 end)
 
--- subs.spawner.page = menu.add_page("Spawner", 17)
+-- subs.main.spawnerBlock = menu.add_mono_block(subs.main.page, "Entities", 0)
+
+-- options.combo['spawnerType'] = menu.add_combo(subs.main.spawnerBlock, "Type", {"Peds"}, function(data, pos)
+--     --some logic
+-- end)
 
 -- stuff.pedList = {}
+-- stuff.spawnerSelected = "None"
+-- stuff.spawnedList = {}
 
--- do
---     for _, pedIno in ipairs(parsedFiles.peds) do
-        
---     end
+-- stuff.spawnedPeds = {}
+
+-- for _, pedInfo in ipairs(parsedFiles.peds) do
+--     table.insert(stuff.pedList, pedInfo['Name'])
 -- end
 
--- options['pedsSpawnerCombo'] = menu.add_combo(subs.spawner.page, "Peds")
+-- stuff.searchResult = stuff.pedList
+
+-- menu.add_static_text(subs.main.spawnerBlock, "Search")
+-- options.inputText['spawnerSearch'] = menu.add_input_text(subs.main.spawnerBlock, "Name/Hash")
+-- options.click['clickSearch'] = menu.add_button(subs.main.spawnerBlock, "Find", function()
+--     thread.create(function()
+--         local text = options.inputText['spawnerSearch']:get()
+--         if text == nil or text == "" then return end
+--         stuff.searchResult = {}
+--         local sourceTable = stuff.pedList
+--         -- if options.combo['spawnerType']:get() == 2 then
+            
+--         -- end
+--         for _, value in ipairs(sourceTable) do
+--             if string.find(value, text) or string.find(value, string.upper(text)) or string.find(value, string.lower(text)) 
+--             or string.find(string.upper(value), text) or string.find(string.lower(value), text)
+--             or tonumber(text) == string.smart_joaat(value) 
+--             then
+--                 table.insert(stuff.searchResult, value)
+--             end
+--         end
+--         if #stuff.searchResult == 0 then table.insert(stuff.searchResult, "None") end
+--         options.combo['spawnerFound']:set_table(stuff.searchResult)
+--     end)
+-- end)
+-- options.click['clickReset'] = menu.add_button(subs.main.spawnerBlock, "Clear", function()
+--     thread.create(function()
+--         stuff.searchResult = stuff.pedList
+--         options.combo['spawnerFound']:set_table(stuff.pedList)
+--     end)
+-- end)
+
+-- options.combo['spawnerFound'] = menu.add_combo(subs.main.spawnerBlock, "List", stuff.pedList, function(data, index)
+--     stuff.spawnerSelected = stuff.searchResult[index]
+-- end)
+-- -- options.dynText['spawnerSelected'] = menu.add_dynamic_text(subs.main.spawnerBlock, function()
+-- --     return string.format("Selected: %s", stuff.spawnerSelected)
+-- -- end)
+-- options.click['spawnSelected'] = menu.add_button(subs.main.spawnerBlock, "Spawn", function()
+--     thread.create(function()
+--         local coords = features.getEntityCoords(PLAYER.PLAYER_PED_ID())
+--         spawner.spawnPed(string.smart_joaat(stuff.spawnerSelected), coords, function(ped)
+--             table.insert(stuff.spawnedPeds, stuff.spawnerSelected)
+--             print(ped)
+--         end)
+--     end)
+-- end)
+
+-- options.comboEx['spawnerSpawnedList'] = menu.add_combo_ex(subs.main.spawnerBlock, "Spawned", 
+--     function(index)
+--         return stuff.spawnedPeds[index]
+--     end,
+--     function()
+--         return #stuff.spawnedPeds
+--     end,
+--     function(data, pos)
+--         print(stuff.spawnedPeds[pos])
+--     end)
+
+-- subs.main.playerListBlock = menu.add_mono_block(subs.main.page, "Players list", 0)
+
+-- stuff.playersMin = {}
+-- stuff.playerList = {}
+-- local function getPIDByNickname(name)
+    
+-- end
+
+-- menu.add_combo_ex(subs.main.playerListBlock, "Players", 
+--     function(items, index)
+--         return stuff.playersMin[index]
+--     end,
+--     function()
+--         stuff.playersMin = {}
+--         for pid = 0, 31 do
+--             if player.is_connected(pid) then
+--                 table.insert(stuff.playersMin, tostring(pid))
+--             else
+--                 stuff.playersMin[pid] = nil
+--             end
+--         end
+--         return #stuff.playersMin
+--     end,
+--     function(data, pos)
+--         print(pos)
+--     end
+-- )
 
 subs.main.settingsBlock = menu.add_mono_block(subs.main.page, "Settings", 0)
+
 
 local function saveConfig()
     thread.create(function()        
@@ -273,6 +472,14 @@ local function saveConfig()
     end)
 end
 
+local function jsonListToArray(table, fieldName)
+    local outTable = {}
+    for _, value in ipairs(table) do
+        table.insert(outTable, value[fieldName])
+    end
+    return outTable
+end
+
 local function loadConfig()
     thread.create(function()        
         if doesFileExist(paths.configs.mainConfig) then
@@ -286,7 +493,7 @@ local function loadConfig()
             end
             for name, value in pairs(configTable.combo) do
                 if options.combo[name] then
-                    options.combo[name]:set(value-1)
+                    options.combo[name]:set(value)
                 end
             end
             for name, value in pairs(configTable.sliderInt) do
@@ -392,6 +599,7 @@ options.configIgnore['switchSeat'] = menu.add_slider_int(subs.main.vehicleBlock,
 	PED.SET_PED_INTO_VEHICLE(PLAYER.PLAYER_PED_ID(), vehicle, num)
 end)
 
+
 menu.add_static_text(subs.main.vehicleBlock, "Movement")
 
 options.bool['engineAlwaysOn'] = menu.add_checkbox(subs.main.vehicleBlock, "Engine always on")
@@ -400,18 +608,21 @@ options.sliderFloat['crewNitroPower'] = menu.add_slider_float(subs.main.vehicleB
 options.bool['cruiseControl'] = menu.add_checkbox(subs.main.vehicleBlock, "Cruise control [L]")
 options.bool['disableTurbulence'] = menu.add_checkbox(subs.main.vehicleBlock, "Disable turbulence")
 options.bool['disableGravity'] = menu.add_checkbox(subs.main.vehicleBlock, "Disable gravity")
--- options.bool['disableCollision'] = menu.add_checkbox(subs.main.vehicleBlock, "Disable collision for aircraft")
+options.bool['disableCollision'] = menu.add_checkbox(subs.main.vehicleBlock, "Disable collision for aircraft", function(data, state)
+    if not state then ENTITY.SET_ENTITY_COLLISION(features.getLocalVehicle(true), true, true) end
+end)
 options.bool['superDrive'] = menu.add_checkbox(subs.main.vehicleBlock, "Super drive [W]")
 options.sliderFloat['superDrivePower'] = menu.add_slider_float(subs.main.vehicleBlock, "Power", 1.0, 30.0)
+--options.bool['citySafeEnabled'] = menu.add_checkbox(subs.main.vehicleBlock, "Volvo® City Safety")
 
 menu.add_static_text(subs.main.vehicleBlock, "Appearence")
-
 options.bool['useCounters'] = menu.add_checkbox(subs.main.vehicleBlock, "Use countermeasures")
 options.bool['useVehicleSignals'] = menu.add_checkbox(subs.main.vehicleBlock, "Vehicle signals", function(data, state)
     if state then utils.notify("Note", "Arrow Left/Right for left and right signals\nUse E to enable flash high beam.\n", 25, 0) end
 end)
 
 options.bool['disableDeformation'] = menu.add_checkbox(subs.main.vehicleBlock, "Disable deformation")
+options.sliderInt['vehicleOpacity'] = menu.add_slider_int(subs.main.vehicleBlock, "Opacity", 0, 255):set(255)
 
 stuff.doors = {
     "Front left",
@@ -474,35 +685,6 @@ options.bool['vehicleSpin'] = menu.add_checkbox(subs.main.vehicleBlock, "Spin", 
     if state then stuff.vehicleSpinHead = ENTITY.GET_ENTITY_HEADING(features.getLocalVehicle(true)) end
 end)
 
-stuff.driveToMePed = 0
-
-
--- options.bool['driveToMe'] = menu.add_checkbox(subs.main.vehicleBlock, "Drive to me", function(data, state)
---     local vehicle = features.getLocalVehicle(true)
--- 	if not features.doesEntityExist(vehicle) then options.bool['driveToMe']:set_bool(false) return end
--- 	local coords = features.getEntityCoords(vehicle)
--- 	local dest = features.getEntityCoords(PLAYER.PLAYER_PED_ID())
--- 	local ped = stuff.driveToMePed
--- 	if state then
-    -- 		callbacks.requestModel(string.joaat("HC_Driver"), function()
-        -- 			entity.spawn_ped(string.joaat("HC_Driver"), coords, function(handle)
-            --                 stuff.driveToMePed = handle
-            --                 ENTITY.SET_ENTITY_INVINCIBLE(handle, true)
---                 ENTITY.SET_ENTITY_VISIBLE(handle, false, false)
---                 PED.SET_PED_INTO_VEHICLE(handle, vehicle, -1)
---                 TASK.TASK_VEHICLE_DRIVE_TO_COORD_LONGRANGE(handle, vehicle, dest.x, dest.y, dest.z, 30.0, 4, 5.0)
---                 utils.notify("Vehicle", "On the route!", 25, 0)
---             end)
--- 		end)
--- 	elseif not state then
--- 		VEHICLE.SET_VEHICLE_FIXED(vehicle)
--- 		VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, 0.0)
--- 		TASK.CLEAR_PED_TASKS_IMMEDIATELY(ped)
--- 		entity.delete(ped)
--- 		system.notify("Vehicle", "Your vehicle has been delivered!", 25, 0)
--- 	end
--- end)
-
 --NETWORK
 
 subs.main.networkBlock = menu.add_mono_block(subs.main.page, "Network", 1)
@@ -528,6 +710,18 @@ menu.add_static_text(subs.main.networkBlock, "Protections")
 options.bool['showOTRPlayers'] = menu.add_checkbox(subs.main.networkBlock, "Show OTR players")
 options.combo['adminDetection'] = menu.add_combo(subs.main.networkBlock, "R* Admin join", {"None", "Notify", "Bail", "Quit"})
 -- options.combo['onCage'] = menu.add_combo(subs.main.networkBlock, "Cage", {"None", "Block"})
+
+subs.main.debugBlock = menu.add_mono_block(subs.main.page, "Debug", 1)
+
+options.click['IS_THIS_MODEL_A_PLANE'] = menu.add_button(subs.main.debugBlock, "IS_THIS_MODEL_A_PLANE", function()
+    print(VEHICLE.IS_THIS_MODEL_A_PLANE(ENTITY.GET_ENTITY_MODEL(features.getLocalVehicle(true))))
+end)
+
+options.click['IS_THIS_MODEL_A_HELI'] = menu.add_button(subs.main.debugBlock, "IS_THIS_MODEL_A_HELI", function()
+    print(VEHICLE.IS_THIS_MODEL_A_HELI(ENTITY.GET_ENTITY_MODEL(features.getLocalVehicle(true))))
+end)
+
+options.bool['disableCollisTick'] = menu.add_checkbox(subs.main.debugBlock, "Collision tick")
 
 function OnInit()
     if doesFileExist(paths.configs.defaults) then
@@ -555,12 +749,10 @@ stuff.isAlreadyTalking = {}
 stuff.activePlayerBlips = {}
 
 function OnKeyPressed(key, isDown)
-    if key == keys.E then
-        if options.bool['debugGun']:get_bool() and isDown then
-            thread.create(function()
-                utils.notify("Note", "Copied in log", 26, 0)
+        if key == keys.E then
+            if options.bool['debugGun']:get() and isDown then
                 local pEntity = memory.alloc(8)
-                if PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(PLAYER.PLAYER_ID(), pEntity) then
+                if player.is_aiming(PLAYER.PLAYER_ID()) and PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(PLAYER.PLAYER_ID(), pEntity) then
                     local entity = memory.read_int64(pEntity)
                     local etype
                     local ehealth = ENTITY.GET_ENTITY_HEALTH(entity)
@@ -575,55 +767,47 @@ function OnKeyPressed(key, isDown)
                     if entity ~= 0 then
                         print(string.format("[Debug gun]\n\tEntity hash: %s\n\tID: %s\n\tType: %s\n\tHealth: %s\t Max heath: %s\n\tCoords: \n\tX: %s\tY: %s\tZ: %s\n", hash, entity, etype, ehealth, emaxhealth, coords.x, coords.y, coords.z))
                     end
+                    utils.notify("Note", "Copied in log", 26, 0)
                 end
                 memory.free(pEntity)
-            end)
-        end
-        if options.bool['useCounters']:get_bool() then
-            stuff.isCountersEnabled = isDown
-        end
-        if options.bool['useVehicleSignals']:get_bool() then
-            system.fiber(function()
+            end
+            if options.bool['useCounters']:get() then
+                stuff.isCountersEnabled = isDown
+            end
+            if options.bool['useVehicleSignals']:get() then
                 local mult = 1.0
                 if isDown then mult = 6.0 end
                 VEHICLE.SET_VEHICLE_LIGHT_MULTIPLIER(features.getLocalVehicle(false), mult)
-            end)
+            end
+            AUDIO.SET_HORN_ENABLED(features.getLocalVehicle(false), not options.bool['useVehicleSignals']:get())
         end
-        system.fiber(function()
-            AUDIO.SET_HORN_ENABLED(features.getLocalVehicle(false), not options.bool['useVehicleSignals']:get_bool())
-        end)
-    end
-    if key == keys.X and isDown then
-        stuff.isNitroEnabled = true
-    end
-    if key == keys.L and isDown then
-        if options.bool['cruiseControl']:get_bool() then
-            stuff.isCruiseControlEnabled = not stuff.isCruiseControlEnabled
-            utils.notify("Cruise control", "Cruise control " .. features.stateify(stuff.isCruiseControlEnabled), 25, 0)
-            stuff.cruiseControlSpeed = ENTITY.GET_ENTITY_SPEED(features.getLocalVehicle(false), true)
+        if key == keys.X and isDown then
+            stuff.isNitroEnabled = true
         end
-    end
-    if key == keys.W then
-        if options.bool['superDrive']:get_bool() then
-            stuff.isSuperDriveEnabled = isDown
+        if key == keys.L and isDown then
+            if options.bool['cruiseControl']:get() then
+                stuff.isCruiseControlEnabled = not stuff.isCruiseControlEnabled
+                utils.notify("Cruise control", "Cruise control " .. features.stateify(stuff.isCruiseControlEnabled), 25, 0)
+                stuff.cruiseControlSpeed = ENTITY.GET_ENTITY_SPEED(features.getLocalVehicle(false), true)
+            end
         end
-    end
-    if key == keys.ArrowLeft then
-        if options.bool['useVehicleSignals']:get_bool() and isDown then
-            system.fiber(function()
+        if key == keys.W then
+            if options.bool['superDrive']:get() then
+                stuff.isSuperDriveEnabled = isDown
+            end
+        end
+        if key == keys.ArrowLeft then
+            if options.bool['useVehicleSignals']:get() and isDown then
                 stuff.leftSignal = not stuff.leftSignal
                 VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(features.getLocalVehicle(false), 1, stuff.leftSignal)
-            end)
+            end
         end
-    end
-    if key == keys.ArrowRight then
-        if options.bool['useVehicleSignals']:get_bool() and isDown then
-            system.fiber(function()
+        if key == keys.ArrowRight then
+            if options.bool['useVehicleSignals']:get() and isDown then
                 stuff.rightSignal = not stuff.rightSignal
                 VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(features.getLocalVehicle(false), 0, stuff.rightSignal)
-            end)
+            end
         end
-    end
 end
 
 function OnNetworkEvent(pid, eventInfo, eventBuf)
@@ -687,7 +871,6 @@ function OnPlayerDeath(pid)
 end
 
 function OnWarningScreen(thread, header, line1, line2, key)
-    print(1)
     local logInfo = string.format("Thread: %s\nHeader: %s\nText line (1): %s\nText line (2): %s\nKey: %s", thread, header, line1, line2, key)
     if options.combo['onWarnScreenLog']:get() > 0 then
         if options.combo['onWarnScreenLog']:get() == 1 or options.combo['onWarnScreenLog']:get() == 3 then
@@ -700,7 +883,6 @@ function OnWarningScreen(thread, header, line1, line2, key)
 end
 
 function OnPlayerOtr(pid)
-    print(pid)
     if options.bool['showOTRPlayers']:get() then
         local ped = features.getPlayerPed(pid)
         local blip = HUD.ADD_BLIP_FOR_ENTITY(ped)
@@ -714,42 +896,33 @@ function OnPlayerOtr(pid)
     end
 end
 
-function OnPlayerJoin(pid)
-    -- http.get("http://ip-api.com/json/" .. ip, function(code, headers, content)
-    --     local parsedContent = json:decode(content)
-    -- end)
-    thread.create(function()
-        if options.combo['adminDetection']:get() > 0 then
-            if player.is_rockstar_dev(pid) then
-                local reaction = "Notify"
-                if options.combo['adminDetection']:get() == 2 then
-                    NETWORK._SHUTDOWN_AND_LOAD_MOST_RECENT_SAVE()
-                    reaction = "Bail"
-                end
-                if options.combo['adminDetection']:get() == 3 then
-                    MISC._RESTART_GAME()
-                    reaction = "Quit"
-                end
-                utils.notify("R* Admin", string.format("Name: %s | RID: %s | Joined your session\nReaction: %s", player.get_name(pid), player.get_rid(pid), reaction), 3, 2)
-            end 
-        end
-    end)
+function OnPlayerActive(pid)
+    if options.combo['adminDetection']:get() > 0 then
+        if player.is_rockstar_dev(pid) then
+            local reaction = "Notify"
+            if options.combo['adminDetection']:get() == 2 then
+                NETWORK._SHUTDOWN_AND_LOAD_MOST_RECENT_SAVE()
+                reaction = "Bail"
+            end
+            if options.combo['adminDetection']:get() == 3 then
+                MISC._RESTART_GAME()
+                reaction = "Quit"
+            end
+            utils.notify("R* Admin", string.format("Name: %s | RID: %s | Joined your session\nReaction: %s", player.get_name(pid), player.get_rid(pid), reaction), 3, 2)
+        end 
+    end
 end
 
 function OnFeatureTick()
-    if options.bool['clumsiness']:get_bool() then
-        thread.create(function()
-            PED.SET_PED_RAGDOLL_ON_COLLISION(PLAYER.PLAYER_PED_ID(), true)
-            wait(0)
-        end)
-    end
-    if options.bool['deadEyeEnabled']:get_bool() then
-        thread.create(function()
-            local timeScale = 0.4
+    thread.create(function()
+        if options.bool['clumsiness']:get() then
+            PED.SET_PED_RAGDOLL_ON_COLLISION(PLAYER.PLAYER_PED_ID(), PED.IS_PED_RUNNING_RAGDOLL_TASK(PLAYER.PLAYER_PED_ID()))
+        end
+        if options.bool['deadEyeEnabled']:get() then
             if player.is_aiming(PLAYER.PLAYER_ID()) then
                 if not stuff.deadEyeActive then
                     GRAPHICS.ANIMPOSTFX_PLAY("BulletTime", 0, true)
-                    MISC.SET_TIME_SCALE(timeScale)
+                    MISC.SET_TIME_SCALE(0.4)
                     stuff.deadEyeActive = true
                 end
             elseif stuff.deadEyeActive then
@@ -757,153 +930,129 @@ function OnFeatureTick()
                 MISC.SET_TIME_SCALE(1.0)
                 stuff.deadEyeActive = false
             end
-            wait(0)
-        end)
-    end
-    if options.bool['becomeGangsta']:get_bool() then
-        thread.create(function()
-		    WEAPON.SET_WEAPON_ANIMATION_OVERRIDE(PLAYER.PLAYER_PED_ID(), utils.joaat("Gang1H"))
-        end)
-    end
-    if options.sliderFloat['runSpeedMult']:get_float() > 0.0 then
-        thread.create(function()
-	        PLAYER.SET_RUN_SPRINT_MULTIPLIER_FOR_PLAYER(PLAYER.PLAYER_ID(), options.sliderFloat['runSpeedMult']:get_float())
-            wait(0)
-        end)
-    end
-    if options.sliderFloat['swimSpeedMult']:get_float() > 0.0 then
-        thread.create(function()
+        end
+        if options.bool['becomeGangsta']:get() then
+            WEAPON.SET_WEAPON_ANIMATION_OVERRIDE(PLAYER.PLAYER_PED_ID(), utils.joaat("Gang1H"))
+        end
+        if options.sliderFloat['runSpeedMult']:get_float() > 0.0 then
+            PLAYER.SET_RUN_SPRINT_MULTIPLIER_FOR_PLAYER(PLAYER.PLAYER_ID(), options.sliderFloat['runSpeedMult']:get_float())
+        end
+        if options.sliderFloat['swimSpeedMult']:get_float() > 0.0 then
             PLAYER.SET_SWIM_MULTIPLIER_FOR_PLAYER(PLAYER.PLAYER_ID(), options.sliderFloat['swimSpeedMult']:get_float())
-            wait(0)
-        end)
-    end
-    do
-        thread.create(function()
-            for name, state in pairs(stuff.activePedFlags) do
-                PED.SET_PED_CONFIG_FLAG(PLAYER.PLAYER_PED_ID(), stuff.pedFlags[name], state)
-            end
-            wait(0)
-        end)
-    end
-    do
-        thread.create(function()
-            for name, state in pairs(stuff.audioFlags) do
-                AUDIO.SET_AUDIO_FLAG(name, state)
-            end
-            wait(0)
-        end)
-    end
-    if options.bool['allowPauseInOnline']:get_bool() then
-        thread.create(function()
+        end
+        for name, state in pairs(stuff.activePedFlags) do
+            PED.SET_PED_CONFIG_FLAG(PLAYER.PLAYER_PED_ID(), stuff.pedFlags[name], state)
+        end
+        for name, state in pairs(stuff.audioFlags) do
+            AUDIO.SET_AUDIO_FLAG(name, state)
+        end
+        if options.bool['allowPauseInOnline']:get() then
             if HUD.IS_PAUSE_MENU_ACTIVE() then
                 MISC.SET_TIME_SCALE(0.0)
             else
                 MISC.SET_TIME_SCALE(1.0)
             end
-        end)
-    end
-    if options.bool['allowPauseWhenDead']:get_bool() then
-        thread.create(function()
+        end
+        if options.bool['allowPauseWhenDead']:get() then
             HUD._ALLOW_PAUSE_MENU_WHEN_DEAD_THIS_FRAME()
-        end)
-    end
-    if options.bool['silentBST']:get_bool() then
-        thread.create(function()            
+        end
+        if options.bool['silentBST']:get() then
             GRAPHICS.ANIMPOSTFX_STOP("MP_Bull_tost")
-        end)
-    end
-    -- if options.bool['cleanupPeds']:get() then
-    --     thread.create(function()
-    --         for _, handle in ipairs(pools.get_all_peds()) do
-    --             if features.doesEntityExist(handle) then
-    --                 if features.getDistance(features.getEntityCoords(PLAYER.PLAYER_PED_ID(), false), features.getEntityCoords(handle), false) <= options.sliderInt['cleanupRadius']:get() then
-    --                     entity.delete(handle)
-    --                 end
-    --             end
-    --         end
-    --     end)
-    -- end
-    -- if options.bool['cleanupVehs']:get_bool() then
-    --     thread.create(function()            
-    --         for _, handle in ipairs(pools.get_all_vehicles()) do
-    --             if features.getDistance(features.getEntityCoords(PLAYER.PLAYER_PED_ID()), features.getEntityCoords(handle), false) <= options.sliderInt['cleanupRadius']:get_int() then
-    --                 entity.request_control(handle, function()
-    --                     entity.delete(handle)
-    --                 end)
-    --             end
-    --         end
-    --     end)
-    -- end
-    if options.bool['engineAlwaysOn']:get_bool() then
-        thread.create(function()
+        end
+        -- if options.bool['cleanupPeds']:get() then
+        --     for _, handle in ipairs(pools.get_all_peds()) do
+        --         if features.doesEntityExist(handle) then
+        --             if features.getDistance(features.getEntityCoords(PLAYER.PLAYER_PED_ID(), false), features.getEntityCoords(handle), false) <= options.sliderInt['cleanupRadius']:get() then
+        --                 entity.delete(handle)
+        --             end
+        --         end
+        --     end
+        -- end
+        -- if options.bool['cleanupVehs']:get() then
+        --     for _, handle in ipairs(pools.get_all_vehicles()) do
+        --         if features.doesEntityExist(handle) then
+        --             if features.getDistance(features.getEntityCoords(PLAYER.PLAYER_PED_ID()), features.getEntityCoords(handle), false) <= options.sliderInt['cleanupRadius']:get() then
+        --                 entity.delete(handle)
+        --             end
+        --         end
+        --     end
+        -- end
+        if features.doesEntityExist(features.getLocalVehicle(true)) then
+            ENTITY.SET_ENTITY_ALPHA(features.getLocalVehicle(true), options.sliderInt['vehicleOpacity']:get(), false)
+        end
+        if options.bool['engineAlwaysOn']:get() then
             local vehicle = features.getLocalVehicle(false)
-            if features.doesEntityExist(vehicle) then
+            if features.vehicleCheck() then
                 VEHICLE.SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
                 VEHICLE.SET_VEHICLE_LIGHTS(vehicle, 0)
                 VEHICLE._SET_VEHICLE_LIGHTS_MODE(vehicle, 2)
             end
-        end)
-    end
-    if options.bool['crewNitro']:get_bool() then
-        thread.create(function()
-            if not stuff.isNitroEnabled then return end
-            local vehicle = features.getLocalVehicle(false)
-            if features.doesEntityExist(vehicle) and not stuff.isNitroActive then
-                callbacks.requestPtfxAsset("veh_xs_vehicle_mods", function()				
-                    VEHICLE._SET_VEHICLE_NITRO_ENABLED(vehicle, true, 2500.0, options.sliderFloat['crewNitroPower']:get_float(), 999999999999999999.0, false)
-                    timers.nitro = os.time()
-                    stuff.isNitroActive = true
-                end)
+        end
+        if options.bool['crewNitro']:get() then
+            if stuff.isNitroEnabled then 
+                local vehicle = features.getLocalVehicle(false)
+                if features.vehicleCheck() and not stuff.isNitroActive then
+                    callbacks.requestPtfxAsset("veh_xs_vehicle_mods", function()				
+                        VEHICLE._SET_VEHICLE_NITRO_ENABLED(vehicle, true, 2500.0, options.sliderFloat['crewNitroPower']:get_float(), 999999999999999999.0, false)
+                        timers.nitro = os.time()
+                        stuff.isNitroActive = true
+                    end)
+                end
+                if os.time() - timers.nitro >= 2.5 and stuff.isNitroActive then
+                    VEHICLE._SET_VEHICLE_NITRO_ENABLED(vehicle, false, 2500.0, options.sliderFloat['crewNitroPower']:get_float(), 999999999999999999.0, false)
+                    stuff.isNitroActive = false
+                    stuff.isNitroEnabled = false
+                end
             end
-            if os.time() - timers.nitro >= 2.5 and stuff.isNitroActive then
-                VEHICLE._SET_VEHICLE_NITRO_ENABLED(vehicle, false, 2500.0, options.sliderFloat['crewNitroPower']:get_float(), 999999999999999999.0, false)
-                stuff.isNitroActive = false
-                stuff.isNitroEnabled = false
+        end
+        if options.bool['cruiseControl']:get() then
+            if stuff.isCruiseControlEnabled then 
+                local vehicle = features.getLocalVehicle(false)
+                if features.vehicleCheck() then 
+                    if VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(vehicle) and not ENTITY.IS_ENTITY_IN_AIR(vehicle) then 
+                        local speed = stuff.cruiseControlSpeed
+                        local multiplier = 1
+                        if ENTITY.GET_ENTITY_SPEED_VECTOR(vehicle, true).y < 0 then multiplier = -1 end
+                        VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, speed*multiplier)
+                    end
+                end
             end
-        end)
-    end
-    if options.bool['cruiseControl']:get_bool() then
-        thread.create(function()
-            if not stuff.isCruiseControlEnabled then return end
+        end
+        if options.bool['disableTurbulence']:get() then
             local vehicle = features.getLocalVehicle(false)
-            if not features.doesEntityExist(vehicle) or not PED.IS_PED_IN_VEHICLE(PLAYER.PLAYER_PED_ID(), vehicle, false) then return end
-            if not VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(vehicle) or ENTITY.IS_ENTITY_IN_AIR(vehicle) then return end
-            local speed = stuff.cruiseControlSpeed
-            local multiplier = 1
-            if ENTITY.GET_ENTITY_SPEED_VECTOR(vehicle, true).y < 0 then multiplier = -1 end
-            VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, speed*multiplier)
-        end)
-    end
-    if options.bool['disableTurbulence']:get_bool() then
-        thread.create(function()
-            local vehicle = features.getLocalVehicle(false)
-            if features.doesEntityExist(vehicle) and VEHICLE.IS_THIS_MODEL_A_PLANE(ENTITY.GET_ENTITY_MODEL(vehicle)) then
+            if features.vehicleCheck() and VEHICLE.IS_THIS_MODEL_A_PLANE(ENTITY.GET_ENTITY_MODEL(vehicle)) then
                 VEHICLE.SET_PLANE_TURBULENCE_MULTIPLIER(vehicle, 0.0)
             end
-        end)
-    end
-    do
-        thread.create(function()
-            if PED.IS_PED_IN_ANY_VEHICLE(PLAYER.PLAYER_PED_ID(), false) then
-                VEHICLE.SET_VEHICLE_GRAVITY(features.getLocalVehicle(false), not options.bool['disableGravity']:get_bool())
+        end
+        if PED.IS_PED_IN_ANY_VEHICLE(PLAYER.PLAYER_PED_ID(), false) then
+            VEHICLE.SET_VEHICLE_GRAVITY(features.getLocalVehicle(false), not options.bool['disableGravity']:get())
+        end
+        -- if options.bool['citySafeEnabled']:get() then
+        --     if features.vehicleCheck() then 
+        --         local vehicle = features.getLocalVehicle(true)
+		-- 	    local vector = ENTITY.GET_ENTITY_SPEED_VECTOR(vehicle, true).y
+        --         -- (3.0 * (-1.0)^features.boolToInt(vector<0.0)) + 0.01
+        --         local coords = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, 0.0, 3.0, 0.0)
+        --         if vector < 25 then
+        --             if MISC.IS_POSITION_OCCUPIED(coords.x, coords.y, coords.z, 0.05, true, true, true, true, true, vehicle, true) then 
+        --                if vector > 2 or vector < -2 then
+        --                    VEHICLE.SET_VEHICLE_BRAKE(vehicle, vector > 2 or vector < -2)
+        --                    VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, vector + 4.0 * ((-1.0)^features.boolToInt(vector>=0)))
+        --                    utils.notify("City Safety", "There is a traffic/pedestrian in front of you!\nBraking...", 3, 2)
+        --                end
+        --             end
+        --         end
+        --     end
+        -- end
+        if options.bool['disableCollision']:get() then
+            local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
+            local class = VEHICLE.GET_VEHICLE_CLASS(vehicle)
+            if class == 15 or class == 16 then 
+               ENTITY.SET_ENTITY_COLLISION(vehicle, false, true)
             end
-        end)
-    end
-    -- do
-    --     thread.create(function()
-    --         local vehicle = features.getLocalVehicle(false)
-    --         local model = ENTITY.GET_ENTITY_MODEL(vehicle)
-    --         print(model)
-    --         print(VEHICLE.IS_THIS_MODEL_A_PLANE(model))
-    --         print(VEHICLE.IS_THIS_MODEL_A_HELI(model))
-    --         if VEHICLE.IS_THIS_MODEL_A_PLANE(model) or VEHICLE.IS_THIS_MODEL_A_HELI(model) then 
-    --             ENTITY.SET_ENTITY_COLLISION(vehicle, not options['disableCollision']:get_bool(), true)
-    --         end
-    --     end)
-    -- end
-    if options.bool['superDrive']:get_bool() then
-        thread.create(function()
-            if PED.IS_PED_IN_ANY_VEHICLE(PLAYER.PLAYER_PED_ID(), false) then
+        end
+        if options.bool['superDrive']:get() then
+            if features.vehicleCheck() then
                 local vehicle = features.getLocalVehicle(false)
                 local multiplier = options.sliderFloat['superDrivePower']:get_float()
                 ENTITY.SET_ENTITY_MAX_SPEED(vehicle, 9999.0)
@@ -913,69 +1062,49 @@ function OnFeatureTick()
                     end)
                 end
             end
-        end)
-    end
-    if options.bool['useCounters']:get_bool() then
-        thread.create(function()
-            if not stuff.isCountersEnabled then return end
-            if os.clock() - timers.useCounters >= 0.3 then
-                local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
-                if features.doesEntityExist(vehicle) and PED.IS_PED_IN_VEHICLE(PLAYER.PLAYER_PED_ID(), vehicle) then
-                    WEAPON.GIVE_WEAPON_TO_PED(PLAYER.PLAYER_PED_ID(), string.joaat("WEAPON_FLAREGUN"), 20, true, false)
-                    local offset = {}
-                    offset.rightStart = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, -2.0, -2.0, 0.0)
-                    offset.rightEnd = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, -30.0, -40.0, -10.0)
-                    offset.leftStart = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, 2.0, -2.0, 0.0)
-                    offset.leftEnd = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, 30.0, -40.0, -10.0)
-                    
-                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(offset.rightStart.x, offset.rightStart.y, offset.rightStart.z, offset.rightEnd.x, offset.rightEnd.y, offset.rightEnd.z, 0, true, 1198879012, PLAYER.PLAYER_PED_ID(), true, false, 1)
-                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(offset.leftStart.x, offset.leftStart.y, offset.leftStart.z, offset.leftEnd.x, offset.leftEnd.y, offset.leftEnd.z, 0, true, 1198879012, PLAYER.PLAYER_PED_ID(), true, false, 1)
-                    timers.useCounters = os.clock()
+        end
+        if options.bool['useCounters']:get() then
+            if stuff.isCountersEnabled then 
+                if os.clock() - timers.useCounters >= 0.3 then
+                    local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
+                    if features.vehicleCheck() then
+                        WEAPON.GIVE_WEAPON_TO_PED(PLAYER.PLAYER_PED_ID(), string.joaat("WEAPON_FLAREGUN"), 20, true, false)
+                        local offset = {}
+                        offset.rightStart = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, -2.0, -2.0, 0.0)
+                        offset.rightEnd = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, -30.0, -40.0, -10.0)
+                        offset.leftStart = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, 2.0, -2.0, 0.0)
+                        offset.leftEnd = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, 30.0, -40.0, -10.0)
+                        
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(offset.rightStart.x, offset.rightStart.y, offset.rightStart.z, offset.rightEnd.x, offset.rightEnd.y, offset.rightEnd.z, 0, true, 1198879012, PLAYER.PLAYER_PED_ID(), true, false, 1)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(offset.leftStart.x, offset.leftStart.y, offset.leftStart.z, offset.leftEnd.x, offset.leftEnd.y, offset.leftEnd.z, 0, true, 1198879012, PLAYER.PLAYER_PED_ID(), true, false, 1)
+                        timers.useCounters = os.clock()
+                    end
                 end
             end
-        end)
-    end
-    if options.bool['disableDeformation']:get_bool() then
-        thread.create(function()
+        end
+        if options.bool['disableDeformation']:get() then
             local vehicle = features.getLocalVehicle(false)
-            if features.doesEntityExist(vehicle) then
+            if features.vehicleCheck() then
                 VEHICLE.SET_VEHICLE_DEFORMATION_FIXED(vehicle)
             end
-        end)
-    end
-    if options.bool['vehicleSpin']:get_bool() then
-        thread.create(function()            
+        end
+        if options.bool['vehicleSpin']:get() then
             local vehicle = features.getLocalVehicle(true)
-            if features.doesEntityExist(vehicle) then
+            if features.vehicleCheck() then
                 entity.request_control(vehicle, function(handle)
                     ENTITY.SET_ENTITY_HEADING(handle, stuff.vehicleSpinHead)
                 end)
                 if stuff.vehicleSpinHead == 360 then stuff.vehicleSpinHead = 0 else stuff.vehicleSpinHead = stuff.vehicleSpinHead + 0.5 end
             end
-        end)
-    end
-    -- if options.bool['driveToMe']:get_bool() then
-    --     local vehicle = features.getLocalVehicle(true)
-	-- 	local coords = features.getEntityCoords(vehicle)
-	-- 	local dest = features.getEntityCoords(PLAYER.PLAYER_PED_ID())
-	-- 	if features.getDistance(coords, dest, false) < 5 then
-	-- 		options.bool['driveToMe']:set_bool(false)
-	-- 	end
-    -- end
-    if options.bool['disableKosatkaCD']:get() then
-        thread.create(function()
+        end
+        if options.bool['disableKosatkaCD']:get() then
             script_global:new(scripts.globals['kosatkaMissileCooldown']):set_float(0.0)
-        end)
-    end
-    if options.bool['disableKosatkaRange']:get() then
-        thread.create(function()
+        end
+        if options.bool['disableKosatkaRange']:get() then
             script_global:new(scripts.globals['kosatkaMissileRange']):set_float(150000.0)
-        end)
-    end
-    thread.create(function()
+        end
         for pid = 0, 31 do
             if player.is_connected(pid) then
-
                 if not player.is_alive(pid) and stuff.isAlreadyDead[pid] == nil then
                     OnPlayerDeath(pid)
                     stuff.isAlreadyDead[pid] = true
@@ -989,7 +1118,6 @@ function OnFeatureTick()
                     HUD.SET_BLIP_DISPLAY(stuff.activePlayerBlips[pid], 0)
                     stuff.activePlayerBlips[pid] = nil
                 end
-
             else
                 if stuff.activePlayerBlips[pid] then
                     HUD.SET_BLIP_DISPLAY(stuff.activePlayerBlips[pid], 0)
